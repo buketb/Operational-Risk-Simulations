@@ -4,20 +4,12 @@
 
  
 
-OpRisk_Loss_Event_DB <- read_excel("load_your_OPRISK_data.xlsx")
+OpRisk_Data <- read_excel("load_your_OPRISK_data.xlsx")
 
  
 
-colnames(OpRisk_Loss_Event_DB[,19])
-
-colnames(OpRisk_Loss_Event_DB[,18])
-
- 
-
-NetLoss_Except_Insurance <- OpRisk_Loss_Event_DB[,19]
-NetLoss_Except_Insurance_incl_Outlier <- NetLoss_Except_Insurance[-which(NetLoss_Except_Insurance == 0),1]
-
- 
+NetLoss_Except_Insurance <- OpRisk_Data[,9]
+NetLoss_Except_Insurance_incl_Outlier <- NetLoss_Except_Insurance[-which(NetLoss_Except_Insurance == 0),1] 
 NetLoss_Except_Insurance_incl_Outlier <- as.matrix(unname(NetLoss_Except_Insurance_incl_Outlier))
 
 
@@ -59,14 +51,14 @@ VaR_Conf999
 
 #Historic
 
-colnames(OpRisk_Loss_Event_DB[,19])
-colnames(OpRisk_Loss_Event_DB[,7]) # "OpRİSK LED LEVEL  1"
+colnames(OpRisk_Data[,9])
+colnames(OpRisk_Data[,5]) # "OpRİSK LED LEVEL  1"
 
  
-OpRisk_Loss_Stress <- OpRisk_Loss_Event_DB[,c(7,19)]
+OpRisk_Loss_Stress <- OpRisk_Data[,c(7,9)]
  
 
-OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
+OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Data[,2]==0),]
 #drop the 0s
 
  
@@ -83,7 +75,6 @@ NetLoss_Stress_hist <- OpRisk_Loss_Stress[,2]
 NetLoss_Stress_hist <- as.matrix(NetLoss_Stress_hist)
 log_NetLoss_Stress_hist <- log(NetLoss_Stress_hist)
 
- 
 
 
 My_VaR <- function(r,n,a){
@@ -107,7 +98,6 @@ My_VaR <- function(r,n,a){
  
 
 set.seed(12345)
-
 VaR_Stress_hist_0999 <- My_VaR(1000000,1000,0.999)
 VaR_Stress_hist_0999
 
@@ -117,13 +107,13 @@ VaR_Stress_hist_0999
 #Hypothetic
 
  
-OpRisk_Loss_Stress <- OpRisk_Loss_Event_DB[,c(7,19)]
+OpRisk_Loss_Stress <- OpRisk_Data[,c(7,9)]
 OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
 
  
-
+#choose your stress items from database
 OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] <- 
-  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 50
+  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 35
 
  
  
@@ -131,64 +121,99 @@ NetLoss_Stress_hypo <- OpRisk_Loss_Stress[,2]
 
 NetLoss_Stress_hypo <- as.matrix(NetLoss_Stress_hypo)
 
- 
-
 log_NetLoss_Stress_hypo <- log(NetLoss_Stress_hypo)
 
- 
 
  
 
 My_VaR<- function(r,n,a){
 
   for (i in 1:n) {
-
- 
-
     x <- rlnorm(r, meanlog = mean(log_NetLoss_Stress_hypo), sdlog = sd(log_NetLoss_Stress_hypo))
-
-
     x <- sort(x)
-
-  
-
-    y[i] <- x[r*a]
-
- 
-
-    
+    y[i] <- x[r*a]  
 
   }
 
   z <- max(y)
-
   return(z) 
-
 }
 
  
 
- 
-
 set.seed(123)
-
- 
-
 VaR_Stress_hypo_0999 <- My_VaR(1000000,1000,0.999)
-
- 
-
 VaR_Stress_hypo_0999
 
  
 
+#Inverse 
+
+OpRisk_Loss_Stress <- OpRisk_Data[,c(7,19)]
+
+OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
+
+OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] <- 
+
+  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 19
+
+NetLoss_Stress_inv <- OpRisk_Loss_Stress[,2]
+
+
  
 
-#Inverse
+NetLoss_Stress_inv <- as.matrix(NetLoss_Stress_inv)
 
  
 
-OpRisk_Loss_Stress <- OpRisk_Loss_Event_DB[,c(7,19)]
+log_NetLoss_Stress_inv <- log(NetLoss_Stress_inv)
+
+ 
+
+My_VaR <- function(r,n,a){
+
+  for (i in 1:n){
+
+    x <- rlnorm(r, meanlog = mean(log_NetLoss_Stress_inv), sdlog = sd(log_NetLoss_Stress_inv))
+
+    x <- sort(x)
+
+    y[i] <- x[r*a]
+
+
+  }
+
+  z <- max(y)
+
+  return(z) 
+
+}
+
+ 
+
+set.seed(1234)
+
+VaR_Stress_inv_0999_19 <- My_VaR(1000000,1000,0.999)
+
+VaR_Stress_inv_0999_19
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+################
+
+ 
+
+ 
+
+OpRisk_Loss_Stress <- OpRisk_Data[,c(7,9)]
 
  
 
@@ -200,7 +225,7 @@ OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
 
 OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] <- 
 
-  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 34
+  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 20
 
  
 
@@ -226,11 +251,11 @@ My_VaR <- function(r,n,a){
 
     x <- rlnorm(r, meanlog = mean(log_NetLoss_Stress_inv), sdlog = sd(log_NetLoss_Stress_inv))
 
-  
+   
 
     x <- sort(x)
 
-  
+   
 
     y[i] <- x[r*a]
 
@@ -248,15 +273,11 @@ My_VaR <- function(r,n,a){
 
 set.seed(123)
 
-VaR_Stress_inv_0999_34 <- My_VaR(1000000,1000,0.999)
+VaR_Stress_inv_0999_20 <- My_VaR(1000000,1000,0.999)
 
  
 
-VaR_Stress_inv_0999_34
-
- 
-
- 
+VaR_Stress_inv_0999_20
 
  
 
@@ -282,15 +303,12 @@ OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
 
 OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] <- 
 
-  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 35
+  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 21
 
  
 
 NetLoss_Stress_inv <- OpRisk_Loss_Stress[,2]
 
- 
-
- 
 
 NetLoss_Stress_inv <- as.matrix(NetLoss_Stress_inv)
 
@@ -304,20 +322,13 @@ My_VaR <- function(r,n,a){
 
   for (i in 1:n) {
 
-    
-
     x <- rlnorm(r, meanlog = mean(log_NetLoss_Stress_inv), sdlog = sd(log_NetLoss_Stress_inv))
-
-   
 
     x <- sort(x)
 
-   
-
     y[i] <- x[r*a]
 
-   
-
+ 
   }
 
   z <- max(y)
@@ -326,93 +337,11 @@ My_VaR <- function(r,n,a){
 
 }
 
- 
 
 set.seed(123)
 
-VaR_Stress_inv_0999_35 <- My_VaR(1000000,1000,0.999)
-
- 
-
-VaR_Stress_inv_0999_35
-
- 
-
- 
-
- 
-
-################
-
- 
-
- 
-
-OpRisk_Loss_Stress <- OpRisk_Loss_Event_DB[,c(7,19)]
-
- 
-
-OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
-
- 
-
- 
-
-OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] <- 
-
-  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 36
-
- 
-
-NetLoss_Stress_inv <- OpRisk_Loss_Stress[,2]
-
- 
-
- 
-
-NetLoss_Stress_inv <- as.matrix(NetLoss_Stress_inv)
-
- 
-
-log_NetLoss_Stress_inv <- log(NetLoss_Stress_inv)
-
- 
-
-My_VaR <- function(r,n,a){
-
-  for (i in 1:n) {
-
-    
-
-    x <- rlnorm(r, meanlog = mean(log_NetLoss_Stress_inv), sdlog = sd(log_NetLoss_Stress_inv))
-
-   
-
-    x <- sort(x)
-
-   
-
-    y[i] <- x[r*a]
-
-   
-
-  }
-
-  z <- max(y)
-
-  return(z) 
-
-}
-
- 
-
-set.seed(123)
-
-VaR_Stress_inv_0999_36 <- My_VaR(1000000,1000,0.999)
-
- 
-
-VaR_Stress_inv_0999_36
+VaR_Stress_inv_0999_21<- My_VaR(1000000,1000,0.999)
+VaR_Stress_inv_0999_21
 
  
 
@@ -426,9 +355,7 @@ VaR_Stress_inv_0999_36
 
  
 
-OpRisk_Loss_Stress <- OpRisk_Loss_Event_DB[,c(7,19)]
-
- 
+OpRisk_Loss_Stress <- OpRisk_Data[,c(7,9)]
 
 OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
 
@@ -438,7 +365,7 @@ OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
 
 OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] <- 
 
-  OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 31
+OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failures"|OpRisk_Loss_Stress[,1]=="Execution, Delivery and Process Management",2] * 16
 
  
 
@@ -486,11 +413,11 @@ My_VaR <- function(r,n,a){
 
 set.seed(123)
 
-VaR_Stress_inv_0999_31 <- My_VaR(1000000,1000,0.999)
+VaR_Stress_inv_0999_16 <- My_VaR(1000000,1000,0.999)
 
  
 
-VaR_Stress_inv_0999_31
+VaR_Stress_inv_0999_16
 
  
 
@@ -508,19 +435,17 @@ VaR_Stress_inv_0999_31
 
 VaR<- NA
 
-for (i in 30:36){
+for (i in 20:25){
 
  
 
  
 
-OpRisk_Loss_Stress <- OpRisk_Loss_Event_DB[,c(7,19)]
+OpRisk_Loss_Stress <- OpRisk_Data[,c(7,9)]
 
  
 
 OpRisk_Loss_Stress <- OpRisk_Loss_Stress[-which(OpRisk_Loss_Stress[,2]==0),]
-
- 
 
  
 
@@ -532,24 +457,17 @@ OpRisk_Loss_Stress[OpRisk_Loss_Stress[,1]=="Business Disruptions & System Failur
 
 NetLoss_Stress_inv <- OpRisk_Loss_Stress[,2]
 
- 
-
- 
-
 NetLoss_Stress_inv <- as.matrix(NetLoss_Stress_inv)
 
  
 
 log_NetLoss_Stress_inv <- log(NetLoss_Stress_inv)
 
- 
 
 set.seed(123)
 
 VaR_Stress_inv_0999_i <- My_VaR(1000000,1000,0.999)
 
 print(VaR_Stress_inv_0999_i)
-
- 
 
 }
